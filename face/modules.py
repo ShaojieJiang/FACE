@@ -48,6 +48,20 @@ def opt_to_kwargs(opt):
     return kwargs
 
 
+class HLoss(nn.Module):
+
+
+    def __init__(self, ignore_index=-1):
+        super(HLoss, self).__init__()
+        self.ignore_index = ignore_index
+
+    def forward(self, x, labels):
+        mask = (labels != self.ignore_index).float()
+        b = F.softmax(x, dim=1) * F.log_softmax(x, dim=1)
+        b = -1.0 * torch.matmul(mask, b.sum(dim=1))
+        return b
+
+
 class Seq2seq(TorchGeneratorModel):
     """Sequence to sequence parent module."""
 

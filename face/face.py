@@ -7,7 +7,7 @@
 # of patent rights can be found in the PATENTS file in the same directory.
 
 from parlai.core.torch_generator_agent import TorchGeneratorAgent
-from .modules import Seq2seq, opt_to_kwargs
+from .modules import Seq2seq, opt_to_kwargs, HLoss
 from parlai.core.utils import NEAR_INF, padded_tensor, round_sigfigs, warn_once
 from parlai.core.torch_agent import TorchAgent, Output
 
@@ -78,10 +78,22 @@ class FaceAgent(TorchGeneratorAgent):
                                 'softmax (see arxiv.org/abs/1711.03953).')
         agent.add_argument('-idr', '--input-dropout', type=float, default=0.0,
                            help='Probability of replacing tokens with UNK in training.')
-        agent.add_argument('-gt', '--ground-truth', type='bool', default=False,
-                           help='Whether to use ground truth for calculating token frequency.')
-        agent.add_argument('-prw', '--pre-weight', type='bool', default=True,
-                           help='Use pre_weight or not.')
+        agent.add_argument('-ft', '--frequency-type', default='out',
+                           choices=['out', 'gt', 'none'],
+                           help='What to use for calculating token frequency.')
+        agent.add_argument('-wt', '--weighing-time', default='pre',
+                           choices=['pre', 'post', 'none'],
+                           help='When to apply weight to losses.')
+        agent.add_argument('-cp', '--confidence-penalty', default='none',
+                           choices=['cp', 'cpf', 'cpfw', 'cpfwn', 'none'],
+                           help='Which kind of confidence penalty to use: '
+                           "'cp' is the confidence-penalty function reported in https://arxiv.org/abs/1809.01941. "
+                           "'cpf' is the parameter-free version proposed in https://arxiv.org/abs/1902.09191. "
+                           "'cpfw' means using the parameter-free version as the weight of FACE. "
+                           "'cpfwn' is a new design that normalizes the weight to the range of [1, +inf], which is "
+                           "more favorable as the weight of FACE.")
+        agent.add_argument('-b', '--beta', type=float, default=2.5,
+                           help='Penalty strength for type "cp".')
 
         super(cls, FaceAgent).add_cmdline_args(argparser)
         FaceAgent.dictionary_class().add_cmdline_args(argparser)
@@ -97,8 +109,12 @@ class FaceAgent(TorchGeneratorAgent):
         self.id = 'FACE'
         if getattr(self, 'word_freq', None) is None:
             self.word_freq = np.zeros(len(self.dict))
-        self.gt = opt['ground_truth']
-        self.pw = opt['pre_weight']
+        self.ft = opt['frequency_type']
+        self.wt = opt['weighing_time']
+        self.cp = opt['confidence_penalty']
+        self.beta = opt['beta']
+        self.masked_entropy = HLoss(ignore_index=self.NULL_IDX)
+        self.ideal_entropy = math.log(1 / len(self.dict))
 
     def build_model(self, states=None):
         """Initialize model, override to change model setup."""
@@ -167,6 +183,9 @@ class FaceAgent(TorchGeneratorAgent):
                 else:
                     raise e
 
+    def weighted_loss(self):
+        return
+
     def train_step(self, batch):
         """Train on a single batch of examples."""
         batchsize = batch.text_vec.size(0)
@@ -179,14 +198,16 @@ class FaceAgent(TorchGeneratorAgent):
             scores, preds, _ = self.model(batch.text_vec, batch.label_vec)
             score_view = scores.view(-1, scores.size(-1))
             preds_clean = self.clean_preds(preds)
-            if self.gt:
+            # Update token frequency, or not
+            if self.ft == 'gt':
                 self.update_frequency(self.clean_preds(batch.label_vec))
-            else:
+            elif self.ft == 'out':
                 self.update_frequency(preds_clean)
-            if self.pw:
+            # calculate loss w/ or w/o pre-/post-weight
+            if self.wt == 'pre':
                 self.criterion.weight = self.loss_weight()
                 loss = self.criterion(score_view, batch.label_vec.view(-1))
-            else: # post_weight
+            elif self.wt == 'post':
                 self.criterion.reduction = 'none'
                 loss = self.criterion(score_view, batch.label_vec.view(-1))
                 device = loss.device
@@ -197,9 +218,25 @@ class FaceAgent(TorchGeneratorAgent):
                 total_freq = self.word_freq.sum()
                 weight = 1 + F.relu(freq_pred - freq_GT) / total_freq
                 loss = torch.matmul(loss, weight)
-            # save loss to metrics
+            else:
+                loss = self.criterion(score_view, batch.label_vec.view(-1))
+
             notnull = batch.label_vec.ne(self.NULL_IDX)
             target_tokens = notnull.long().sum().item()
+            # Use confidence penalty or not
+            if self.cp != 'none':
+                entropy = self.masked_entropy(score_view, batch.label_vec.view(-1))
+                mean_entropy = entropy / target_tokens
+                if self.cp == 'cp':
+                    loss -= self.beta * mean_entropy
+                elif self.cp == 'cpf':
+                    loss += 1 / mean_entropy
+                elif self.cp == 'cpfw':
+                    # TODO: normalize weight to [1, ++]?
+                    loss *= (1 + 1 / mean_entropy)
+                elif self.cp == 'cpfwn':
+                    loss *= (self.ideal_entropy / mean_entropy)
+            # save loss to metrics
             correct = ((batch.label_vec == preds) * notnull).sum().item()
             self.metrics['correct_tokens'] += correct
             self.metrics['loss'] += loss.item()
@@ -257,7 +294,8 @@ class FaceAgent(TorchGeneratorAgent):
             # calculate loss on targets with teacher forcing
             f_scores, f_preds, _ = self.model(batch.text_vec, batch.label_vec)
             score_view = f_scores.view(-1, f_scores.size(-1))
-            loss = self.criterion(score_view, batch.label_vec.view(-1)).sum()
+            self.criterion.reduction = 'sum'
+            loss = self.criterion(score_view, batch.label_vec.view(-1))
             # save loss to metrics
             notnull = batch.label_vec.ne(self.NULL_IDX)
             target_tokens = notnull.long().sum().item()
