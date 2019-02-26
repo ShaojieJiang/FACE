@@ -1,9 +1,8 @@
 # FACE
 
-This directory contains the PyTorch implementation of the models
-proposed in paper **Improving Neural Response Diversity with
-Frequency-Aware Cross-Entropy Loss**, together with the data used for
-experiments.
+This repo contains the official implementation of the models proposed
+in paper **Improving Neural Response Diversity with Frequency-Aware
+Cross-Entropy Loss**, together with the data used for experiments.
 
 ## Requirements
 
@@ -58,3 +57,10 @@ following paper:
 	Title = {Improving Neural Response Diversity with Frequency-Aware Cross-Entropy Loss},
 	Year = {2019}}
 ```
+
+## Baseline Models
+
+I'm cleaning up the baseline models used in our paper, namely `MMI`
+and `MHAM` models and their variants. There will be separate repos for
+these models, but before that, you can find my current implementation
+[here](https://github.com/ShaojieJiang/FACE_orig).
