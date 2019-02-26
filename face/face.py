@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2017-present, Facebook, Inc.
+# Copyright (c) 2019-present, Shaojie Jiang.
 # All rights reserved.
 # This source code is licensed under the BSD-style license found in the
-# LICENSE file in the root directory of this source tree. An additional grant
-# of patent rights can be found in the PATENTS file in the same directory.
+# LICENSE file in the root directory of this source tree.
+#
+# This programme is modified on top of the Seq2Seq implementation of Facebook Inc.,
+# please visit http://parl.ai/ for more details.
+#
+# Should you have any problems using this programme, please contact Shaojie Jiang
+# via shaojiejiang.1991@gmail.com
 
 from parlai.core.torch_generator_agent import TorchGeneratorAgent
 from .modules import Seq2seq, opt_to_kwargs, HLoss
