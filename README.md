@@ -44,7 +44,7 @@ python examples/train_model.py -m face -h
 In cases when you want to reproduce the results reported in our paper,
 decompress `data.zip`. Then the subdirectories:
 
-- **OSDb**: Contains validation and test sets used in our experiments for the OpenSubtitles dataset.
+- **OSDb**: Contains validation and test sets used in our experiments for the OpenSubtitles dataset. We applogize that the training set is too large to share online.
 - **Tweet_IDs**: Contains the Tweet IDs for `Train`, `Valid`, `Test` and `Human_eval` sets used in our experiments.
 
 ## Citation
@@ -65,4 +65,4 @@ following paper:
 I'm cleaning up the baseline models used in our paper, namely `MMI`
 and `MHAM` models and their variants. There will be separate repos for
 these models, but before that, you can find my current implementation
-[here](https://github.com/ShaojieJiang/FACE_orig) if you really want them :wink:.
+[here](https://github.com/ShaojieJiang/FACE_orig) if you really want them :wink:
