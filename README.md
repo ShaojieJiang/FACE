@@ -1,8 +1,10 @@
-# FACE
+# Intro
+
+Frequency-Aware Cross-Entropy (FACE) is a simple yet effective algorithm that helps to improve the response diversity of Seq2Seq-based chatbots. The main idea is to assign token frequency-based weights to cross-entropy loss function, so as to suppress meaningless high-frequency tokens, which we believe to have caused generic responses like _"I don't know"_. Read our [paper](https://arxiv.org/abs/1902.09191) for more details.
 
 This repo contains the official implementation of the models proposed
 in paper **Improving Neural Response Diversity with Frequency-Aware
-Cross-Entropy Loss**, together with the data used for experiments.
+Cross-Entropy Loss**, together with the data we used for experiments.
 
 ## Requirements
 
