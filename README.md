@@ -7,12 +7,13 @@ Cross-Entropy Loss**, together with the data used for experiments.
 ## Requirements
 
 To use this programme, you need [PyTorch](https://pytorch.org/) 1.0.0
-and the latest version of
+(tested with Python 3.6+) and the latest version of
 [ParlAI](https://github.com/facebookresearch/ParlAI) framework (tested
-on commit `c6745203`). After downloading and installing ParlAI, move
-the directory `face` in this repo to
-`Your_Path_To_ParlAI/parlai/agents/`.  Read on for some examples of
-running experiments.
+on commit `c6745203`).
+
+After downloading and installing ParlAI, move the directory `face` in
+this repo to `Your_Path_To_ParlAI/parlai/agents/`.  Read on for some
+examples of running experiments.
 
 ## Arguments
 
@@ -22,6 +23,7 @@ To use different versions of `FACE`, try the following arguments:
 - **`-ft` or `--frequency-type`**: Supported values are `out`, `gt`, and `none`, corresponding to "output frequency", "GT frequency" and "no frequency" (in cases of using CP* methods only).
 - **`-cp` or `--confidence-penalty`**: Supports values like `cp` (Eq. 12), `cpf` (Eq. 13), `cpfw` (Eq. 14), and `none` if not intending to use confidence-penalty. *N.B.*, `cpfwn` is a new version of `cpfw` that normalizes weight values to the range of `[1, +inf]`, while `cpfw` weights can never approach `1`.
 - **`-b` or `--beta`**: Penalty strength specifically used by `cp` (Eq. 12).
+- **Seq2Seq**: if all the values of `-wt`, `-ft`, `-cp` are set to `none` (and regardless of the value of `-b`), the programme reverts to its simplest form: _Seq2Seq_.
 
 ## Examples
 
@@ -32,7 +34,7 @@ The following example runs `FACE` with **"pre weight"** and **"output frequency"
 python examples/train_model.py -t OpenSubtitles -m face -mf /tmp/model_face -bs 32 -vtim 30
 ```
 
-To get a complete cheatsheet of `framework`- or `FACE`-specific arguments, run the following command:
+To get a complete cheatsheet of `ParlAI`- or `FACE`-specific arguments, run the following command:
 ```
 python examples/train_model.py -m face -h
 ```
@@ -63,4 +65,4 @@ following paper:
 I'm cleaning up the baseline models used in our paper, namely `MMI`
 and `MHAM` models and their variants. There will be separate repos for
 these models, but before that, you can find my current implementation
-[here](https://github.com/ShaojieJiang/FACE_orig).
+[here](https://github.com/ShaojieJiang/FACE_orig) if you really want them :wink:.
