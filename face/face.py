@@ -153,7 +153,6 @@ class FaceAgent(TorchGeneratorAgent):
 
         if self.use_cuda:
             self.model.cuda()
-            self.word_freq = self.word_freq.cuda()
 
         if opt['embedding_type'].endswith('fixed'):
             print('Seq2seq: fixing embedding weights.')
@@ -187,9 +186,6 @@ class FaceAgent(TorchGeneratorAgent):
                     raise RuntimeError(m)
                 else:
                     raise e
-
-    def weighted_loss(self):
-        return
 
     def train_step(self, batch):
         """Train on a single batch of examples."""
@@ -406,7 +402,8 @@ class FaceAgent(TorchGeneratorAgent):
     def load(self, path):
         """Return opt and model states."""
         states = torch.load(path, map_location=lambda cpu, _: cpu)
-        self.word_freq = states['word_freq']
+        if 'word_freq' in states:
+            self.word_freq = states['word_freq']
         # set loaded states if applicable
         self.model.load_state_dict(states['model'])
         if 'longest_label' in states:

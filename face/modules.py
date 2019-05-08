@@ -53,7 +53,9 @@ def opt_to_kwargs(opt):
 
 
 class HLoss(nn.Module):
-
+    """
+    Entropy loss used for entropy maximization.
+    """
 
     def __init__(self, ignore_index=-1):
         super(HLoss, self).__init__()
