@@ -480,6 +480,8 @@ class FaceAgent(TorchGeneratorAgent):
 
         # self.word_freq *= self.opt['decay_factor']
         for k, v in curr.items():
+            if k == self.END_IDX: # do not suppress END token
+                 continue
             self.word_freq[k] += v
 
     def loss_weight(self):
